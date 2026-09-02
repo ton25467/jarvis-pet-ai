@@ -11,7 +11,9 @@ import threading
 app = Flask(__name__)
 
 # --- CONFIGURATION ---
-GEMINI_API_KEY = "AIzaSyAPP_duL4PuxX9Y1Vh8r31Is7YIKzWej_0" # API Key จากผู้ใช้
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+if not GEMINI_API_KEY:
+    print("⚠️ คำเตือน: ยังไม่ได้ตั้งค่า GEMINI_API_KEY ใน Environment Variables!")
 genai.configure(api_key=GEMINI_API_KEY)
 model = genai.GenerativeModel('gemini-1.5-flash')
 
