@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>J.A.R.V.I.S. Command Center</title>
+    <style>
+        body { background-color: #050505; color: #00ffcc; font-family: 'Courier New', Courier, monospace; text-align: center; padding-top: 50px; margin: 0; min-height: 100vh; }
+        h1 { font-size: 32px; letter-spacing: 5px; text-transform: uppercase; margin-bottom: 5px; text-shadow: 0 0 10px #00ffcc; }
+        p.subtitle { color: #00aa88; font-size: 14px; margin-bottom: 40px; letter-spacing: 2px; }
+        .nav-link { display: inline-block; margin-bottom: 30px; color: #00ffcc; text-decoration: none; padding: 8px 20px; border: 1px solid #00ffcc; border-radius: 5px; font-size: 14px; transition: all 0.3s; }
+        .nav-link:hover { background: #00ffcc; color: #050505; }
+        button { width: 200px; height: 200px; border-radius: 50%; background: #111; border: 2px solid #00ffcc; color: #00ffcc; font-size: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 0 20px #00ffcc44, inset 0 0 20px #00ffcc44; transition: all 0.3s ease-in-out; font-family: 'Courier New', Courier, monospace; display: block; margin: 0 auto; }
+        button:hover { box-shadow: 0 0 40px #00ffcc, inset 0 0 40px #00ffcc; }
+        button:active { transform: scale(0.95); }
+        .listening { background: #00ffcc; color: #050505; box-shadow: 0 0 60px #00ffcc, inset 0 0 20px #fff; border-color: #fff; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); box-shadow: 0 0 40px #00ffcc; } 50% { transform: scale(1.05); box-shadow: 0 0 80px #00ffcc; } 100% { transform: scale(1); box-shadow: 0 0 40px #00ffcc; } }
+        #status { margin-top: 30px; font-size: 1.2em; min-height: 30px; color: #00aa88; }
+        #transcript { margin: 20px auto; max-width: 400px; min-height: 60px; font-size: 18px; color: #fff; text-align: center; word-wrap: break-word; padding: 15px; border: 1px dashed #00aa88; border-radius: 5px; background: #0a0a0a; }
+        form { margin-top: 20px; }
+        input[type="text"] { width: 70%; max-width: 300px; padding: 12px; font-size: 16px; border: 1px solid #00aa88; background: #111; color: #00ffcc; font-family: inherit; }
+        input[type="text"]:focus { outline: none; border-color: #00ffcc; box-shadow: 0 0 10px #00ffcc; }
+        input[type="submit"] { padding: 12px 20px; font-size: 16px; border: 1px solid #00aa88; background: #004433; color: #00ffcc; cursor: pointer; font-family: inherit; transition: 0.3s; }
+        input[type="submit"]:hover { background: #00ffcc; color: #050505; }
+        #sending { display: none; font-size: 18px; color: #00ffcc; margin: 20px; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0.5; } }
+    </style>
+</head>
+<body>
+    <a href="/control" class="nav-link">[ ACCESS MANUAL OVERRIDE (รีโมท) ]</a>
+    <h1>J.A.R.V.I.S.</h1>
+    <p class="subtitle">VOICE INTERFACE ONLINE</p>
+    
+    <button id="micBtn" onclick="toggleMic()">[ INITIATE ]<br><br>TAP TO SPEAK</button>
+    <div id="status">SYSTEM READY. AWAITING COMMAND...</div>
+    <div id="transcript"></div>
+    <div id="sending">UPLOADING DIRECTIVE...</div>
+    
+    <form action="/ui_chat" method="POST" id="chatForm" onsubmit="event.preventDefault(); sendMsg(document.getElementById('msgInput').value);">
+        <input type="text" name="message" id="msgInput" placeholder="> Override input...">
+        <input type="submit" value="SEND">
+    </form>
+
+    <script>
+        let recognition = null;
+        let isListening = false;
+
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SR();
+            recognition.lang = 'th-TH'; // เปลี่ยนเป็น en-US ได้
+            recognition.continuous = false;
+            recognition.interimResults = true;
+
+            recognition.onresult = function(e) {
+                let final = '', interim = '';
+                for (let i = e.resultIndex; i < e.results.length; i++) {
+                    if (e.results[i].isFinal) final += e.results[i][0].transcript;
+                    else interim += e.results[i][0].transcript;
+                }
+                document.getElementById('transcript').innerText = final || interim;
+                if (final) {
+                    document.getElementById('msgInput').value = final;
+                    stopMic();
+                    sendMsg(final);
+                }
+            };
+            recognition.onerror = function(e) { document.getElementById('status').innerText = 'ERROR: ' + e.error; stopMic(); };
+            recognition.onend = function() { stopMic(); };
+        } else {
+            document.getElementById('status').innerText = 'SYSTEM WARNING: SPEECH MODULE NOT SUPPORTED.';
+            document.getElementById('micBtn').style.display = 'none';
+        }
+
+        function toggleMic() { if (isListening) { recognition.stop(); stopMic(); } else { recognition.start(); startMic(); } }
+        function startMic() {
+            isListening = true;
+            document.getElementById('micBtn').classList.add('listening');
+            document.getElementById('micBtn').innerHTML = '[ RECORDING ]<br><br>SPEAK NOW';
+            document.getElementById('status').innerText = 'LISTENING...';
+            document.getElementById('transcript').innerText = '';
+        }
+        function stopMic() {
+            isListening = false;
+            document.getElementById('micBtn').classList.remove('listening');
+            document.getElementById('micBtn').innerHTML = '[ INITIATE ]<br><br>TAP TO SPEAK';
+            document.getElementById('status').innerText = 'PROCESSING...';
+        }
+        function sendMsg(text) {
+            document.getElementById('sending').style.display = 'block';
+            document.getElementById('chatForm').style.display = 'none';
+            document.getElementById('micBtn').style.display = 'none';
+            document.getElementById('status').innerText = 'DIRECTIVE SENT. AWAITING AI RESPONSE...';
+            let form = new FormData();
+            form.append('message', text);
+            fetch('/ui_chat', {method:'POST', body: new URLSearchParams(form)})
+                .then(res => res.text())
+                .then(text => {
+                    if (text.startsWith("OPEN:")) {
+                        let url = text.substring(5);
+                        let iframe = document.createElement("iframe");
+                        iframe.style.display = "none";
+                        iframe.src = url;
+                        document.body.appendChild(iframe);
+                        setTimeout(() => document.body.removeChild(iframe), 2000);
+                    }
+                    setTimeout(() => {
+                        document.getElementById('sending').style.display = 'none';
+                        document.getElementById('chatForm').style.display = 'block';
+                        document.getElementById('micBtn').style.display = 'block';
+                        document.getElementById('msgInput').value = '';
+                        document.getElementById('status').innerText = 'SYSTEM READY. AWAITING COMMAND...';
+                    }, 1000);
+                })
+                .catch(()=>{ location.reload(); });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bit Control Panel</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: sans-serif; text-align: center; margin: 0; padding: 20px; background: #1a1a2e; color: #fff; min-height: 100vh; }
+    h1 { font-size: 24px; margin-bottom: 20px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; max-width: 400px; margin: 0 auto; }
+    .btn { padding: 20px 10px; font-size: 18px; border-radius: 12px; border: none; cursor: pointer; transition: 0.2s; font-weight: bold; }
+    .btn:active { transform: scale(0.95); }
+    .btn-food { background: #e94560; color: white; }
+    .btn-weather { background: #0f3460; color: white; }
+    .btn-mail { background: #ff9a3c; color: white; }
+    .btn-cal { background: #4caf50; color: white; }
+    .btn-news { background: #9c27b0; color: white; }
+    .btn-chat { background: #533483; color: white; grid-column: span 2; }
+    #status { margin-top: 20px; color: #4CAF50; font-size: 18px; display: none; }
+    .nav { margin-bottom: 20px; }
+    .nav a { color: #fff; text-decoration: none; padding: 8px 15px; border: 1px solid #fff; border-radius: 20px; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="nav">
+    <a href="/">🎤 กลับไปหน้าคุยด้วยเสียง</a>
+  </div>
+
+  <h1>🎮 รีโมทสั่งงานน้อง Bit</h1>
+  
+  <div class="grid">
+    <button class="btn btn-food" onclick="sendCommand('ป้อนอาหาร')">🍖 ให้อาหาร</button>
+    <button class="btn btn-weather" onclick="sendCommand('สภาพอากาศวันนี้เป็นไงบ้าง')">🌤️ สภาพอากาศ</button>
+    <button class="btn btn-mail" onclick="sendCommand('มีอีเมลใหม่ไหม')">📧 เช็กอีเมล</button>
+    <button class="btn btn-cal" onclick="sendCommand('วันนี้นัดหมายอะไรบ้าง')">📅 เช็กตารางงาน</button>
+    <button class="btn btn-news" onclick="sendCommand('สรุปข่าวเด่นวันนี้ให้ฟังหน่อย')">📰 ข่าวเด่นวันนี้</button>
+    <button class="btn btn-chat" onclick="sendCommand('สรุปสเตตัสตัวเองให้ฟังหน่อย')">📊 เช็กสถานะน้อง Bit</button>
+  </div>
+
+  <div id="status">🚀 ส่งคำสั่งแล้ว! รอน้อง Bit ตอบกลับ...</div>
+
+  <script>
+    function sendCommand(text) {
+      document.getElementById('status').style.display = 'block';
+      let form = new FormData();
+      form.append('message', text);
+      fetch('/ui_chat', {method:'POST', body: new URLSearchParams(form)})
+        .then(res => res.text())
+        .then(text => {
+            if (text.startsWith("OPEN:")) {
+                let url = text.substring(5);
+                let iframe = document.createElement("iframe");
+                iframe.style.display = "none";
+                iframe.src = url;
+                document.body.appendChild(iframe);
+                setTimeout(() => document.body.removeChild(iframe), 2000);
+            }
+            setTimeout(()=>{ document.getElementById('status').style.display = 'none'; }, 2500);
+        })
+        .catch(()=>{ document.getElementById('status').style.display = 'none'; });
+    }
+  </script>
+</body>
+</html>
