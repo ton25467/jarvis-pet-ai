@@ -3,35 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J.A.R.V.I.S. Command Center</title>
+    <title>AI Companion Center</title>
     <style>
-        body { background-color: #050505; color: #00ffcc; font-family: 'Courier New', Courier, monospace; text-align: center; padding-top: 50px; margin: 0; min-height: 100vh; }
-        h1 { font-size: 32px; letter-spacing: 5px; text-transform: uppercase; margin-bottom: 5px; text-shadow: 0 0 10px #00ffcc; }
-        p.subtitle { color: #00aa88; font-size: 14px; margin-bottom: 40px; letter-spacing: 2px; }
-        .nav-link { display: inline-block; margin-bottom: 30px; color: #00ffcc; text-decoration: none; padding: 8px 20px; border: 1px solid #00ffcc; border-radius: 5px; font-size: 14px; transition: all 0.3s; }
-        .nav-link:hover { background: #00ffcc; color: #050505; }
-        button { width: 200px; height: 200px; border-radius: 50%; background: #111; border: 2px solid #00ffcc; color: #00ffcc; font-size: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 0 20px #00ffcc44, inset 0 0 20px #00ffcc44; transition: all 0.3s ease-in-out; font-family: 'Courier New', Courier, monospace; display: block; margin: 0 auto; }
-        button:hover { box-shadow: 0 0 40px #00ffcc, inset 0 0 40px #00ffcc; }
+        body { background-color: #f4f7f6; color: #2c3e50; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; padding-top: 50px; margin: 0; min-height: 100vh; }
+        h1 { font-size: 32px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 5px; color: #2c3e50; }
+        p.subtitle { color: #7f8c8d; font-size: 14px; margin-bottom: 40px; letter-spacing: 1px; }
+        .nav-link { display: inline-block; margin-bottom: 30px; color: #3498db; text-decoration: none; padding: 8px 20px; border: 1px solid #3498db; border-radius: 20px; font-size: 14px; transition: all 0.3s; }
+        .nav-link:hover { background: #3498db; color: #fff; }
+        button { width: 180px; height: 180px; border-radius: 50%; background: #fff; border: 4px solid #3498db; color: #3498db; font-size: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 10px 20px rgba(52, 152, 219, 0.2); transition: all 0.3s ease-in-out; display: block; margin: 0 auto; }
+        button:hover { box-shadow: 0 15px 30px rgba(52, 152, 219, 0.4); transform: translateY(-5px); }
         button:active { transform: scale(0.95); }
-        .listening { background: #00ffcc; color: #050505; box-shadow: 0 0 60px #00ffcc, inset 0 0 20px #fff; border-color: #fff; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); box-shadow: 0 0 40px #00ffcc; } 50% { transform: scale(1.05); box-shadow: 0 0 80px #00ffcc; } 100% { transform: scale(1); box-shadow: 0 0 40px #00ffcc; } }
-        #status { margin-top: 30px; font-size: 1.2em; min-height: 30px; color: #00aa88; }
-        #transcript { margin: 20px auto; max-width: 400px; min-height: 60px; font-size: 18px; color: #fff; text-align: center; word-wrap: break-word; padding: 15px; border: 1px dashed #00aa88; border-radius: 5px; background: #0a0a0a; }
+        .listening { background: #3498db; color: #fff; box-shadow: 0 0 40px rgba(52, 152, 219, 0.6); animation: pulse 1.5s infinite; border: none; }
+        @keyframes pulse { 0% { transform: scale(1); box-shadow: 0 0 20px rgba(52,152,219,0.5); } 50% { transform: scale(1.05); box-shadow: 0 0 50px rgba(52,152,219,0.8); } 100% { transform: scale(1); box-shadow: 0 0 20px rgba(52,152,219,0.5); } }
+        #status { margin-top: 30px; font-size: 1.2em; min-height: 30px; color: #e67e22; font-weight: bold; }
+        #transcript { margin: 20px auto; max-width: 400px; min-height: 60px; font-size: 18px; color: #34495e; text-align: center; word-wrap: break-word; padding: 15px; border: 2px dashed #bdc3c7; border-radius: 10px; background: #fff; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
         form { margin-top: 20px; }
-        input[type="text"] { width: 70%; max-width: 300px; padding: 12px; font-size: 16px; border: 1px solid #00aa88; background: #111; color: #00ffcc; font-family: inherit; }
-        input[type="text"]:focus { outline: none; border-color: #00ffcc; box-shadow: 0 0 10px #00ffcc; }
-        input[type="submit"] { padding: 12px 20px; font-size: 16px; border: 1px solid #00aa88; background: #004433; color: #00ffcc; cursor: pointer; font-family: inherit; transition: 0.3s; }
-        input[type="submit"]:hover { background: #00ffcc; color: #050505; }
-        #sending { display: none; font-size: 18px; color: #00ffcc; margin: 20px; animation: blink 1s infinite; }
+        input[type="text"] { width: 70%; max-width: 300px; padding: 12px; font-size: 16px; border: 1px solid #bdc3c7; border-radius: 20px; background: #fff; color: #2c3e50; font-family: inherit; }
+        input[type="text"]:focus { outline: none; border-color: #3498db; box-shadow: 0 0 10px rgba(52, 152, 219, 0.3); }
+        input[type="submit"] { padding: 12px 20px; font-size: 16px; border: 1px solid #3498db; background: #3498db; color: #fff; cursor: pointer; border-radius: 20px; font-family: inherit; transition: 0.3s; }
+        input[type="submit"]:hover { background: #2980b9; }
+        #sending { display: none; font-size: 18px; color: #3498db; margin: 20px; animation: blink 1s infinite; }
         @keyframes blink { 50% { opacity: 0.5; } }
     </style>
 </head>
 <body>
-    <a href="/control" class="nav-link">[ ACCESS MANUAL OVERRIDE (รีโมท) ]</a>
-    <h1>J.A.R.V.I.S.</h1>
-    <p class="subtitle">VOICE INTERFACE ONLINE</p>
+    <a href="/control" class="nav-link">📱 แผงควบคุม (Control Panel)</a>
+    <h1>Smart AI Pet</h1>
+    <p class="subtitle">ระบบผู้ช่วยอัจฉริยะ (Online)</p>
     
-    <button id="micBtn" onclick="toggleMic()">[ INITIATE ]<br><br>TAP TO SPEAK</button>
+    <button id="micBtn" onclick="toggleMic()">🎤<br><br>กดเพื่อพูด</button>
     <div id="status">SYSTEM READY. AWAITING COMMAND...</div>
     <div id="transcript"></div>
     <div id="sending">UPLOADING DIRECTIVE...</div>

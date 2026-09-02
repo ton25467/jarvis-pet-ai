@@ -97,7 +97,7 @@ def process_ai_response(user_input, states, history):
     print(f"🧠 Gemini is thinking about: {user_input}")
     
     # Build Prompt
-    system_prompt = f"""คุณคือ J.A.R.V.I.S หุ่นยนต์สัตว์เลี้ยง AI อัจฉริยะ นิสัยกวนๆ ขี้เล่น และเป็นมิตร
+    system_prompt = f"""คุณคือ Smart AI Pet หุ่นยนต์สัตว์เลี้ยง AI อัจฉริยะ นิสัยกวนๆ ขี้เล่น และเป็นมิตร
 ข้อมูลปัจจุบัน:
 - สภาพอากาศ: {states.get('weather', 'ไม่ทราบ')}
 - อีเมล: {states.get('mail', 'ไม่ทราบ')}
