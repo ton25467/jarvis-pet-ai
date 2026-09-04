@@ -225,7 +225,7 @@ def ui_chat():
         fast_emotion = "weather"
         
     elif "บลูทูธ" in user_input.lower() or "ลำโพง" in user_input or "ฟังเพลง" in user_input:
-        fast_track_response = "สลับเข้าสู่โหมดลำโพงบลูทูธแล้วครับ หากต้องการกลับสู่ระบบผู้ช่วย กรุณากดปุ่มรีเซ็ตที่บอร์ดนะครับ"
+        fast_track_response = "สลับเข้าสู่โหมดลำโพงบลูทูธแล้วครับ กรุณาเปิดบลูทูธที่มือถือแล้วค้นหาชื่อบอร์ดเพื่อเชื่อมต่อนะครับ หากต้องการกลับสู่ระบบผู้ช่วย กรุณากดปุ่มรีเซ็ตที่บอร์ดครับ"
         fast_emotion = "happy"
         fast_mode = "bluetooth"
         
