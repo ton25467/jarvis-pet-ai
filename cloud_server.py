@@ -177,10 +177,9 @@ def ui_chat():
         fast_track_response = f"ด่วนเลยครับเจ้านาย {mail_status}"
         fast_emotion = "mail"
     
-    elif "เปิดเครื่องคิดเลข" in user_input:
-        # บน Cloud เราไม่สามารถ Popen("calc.exe") ในคอมของผู้ใช้ได้โดยตรง
-        fast_track_response = "โหมดคลาวด์ไม่สามารถเปิดโปรแกรมในคอมพิวเตอร์ได้ครับเจ้านาย"
-        fast_emotion = "sad"
+    elif "เครื่องคิดเลข" in user_input or "คิดเลข" in user_input:
+        fast_track_response = "เปิดเครื่องคิดเลขให้แล้วครับ หรือจะบอกโจทย์ให้ผมคิดเลขให้เลยก็ได้นะครับ"
+        fast_emotion = "calc"
         
     elif "เปิดเว็บ" in user_input or "เปิด google" in user_input.lower() or "กูเกิ้ล" in user_input:
         fast_track_response = "เปิดกูเกิ้ลให้แล้วครับเจ้านาย"
@@ -231,6 +230,8 @@ def ui_chat():
         # Determine if we should send an OPEN command to the client browser (for mobile)
         if "เปิดเว็บ" in user_input or "เปิด google" in user_input.lower() or "กูเกิ้ล" in user_input:
             return "OPEN:https://www.google.com"
+        elif "เครื่องคิดเลข" in user_input or "คิดเลข" in user_input:
+            return "OPEN:https://www.google.com/search?q=calculator"
         elif "เน็ตฟลิกซ์" in user_input or "netflix" in user_input.lower():
             return "OPEN:https://www.netflix.com"
         elif "youtube" in user_input.lower() or "ยูทูป" in user_input:
