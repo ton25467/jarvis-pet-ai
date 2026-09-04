@@ -34,7 +34,8 @@
     <button class="btn btn-weather" onclick="sendCommand('สภาพอากาศวันนี้เป็นไงบ้าง')">🌤️ สภาพอากาศ</button>
     <button class="btn btn-mail" onclick="sendCommand('มีอีเมลใหม่ไหม')">📧 เช็กอีเมล</button>
     <button class="btn btn-cal" onclick="sendCommand('วันนี้นัดหมายอะไรบ้าง')">📅 เช็กตารางงาน</button>
-    <button class="btn btn-news" onclick="sendCommand('สรุปข่าวเด่นวันนี้ให้ฟังหน่อย')">📰 ข่าวเด่นวันนี้</button>
+    <button class="btn btn-news" onclick="sendCommand('สรุปข่าวเด่นวันนี้ให้ฟังหน่อย')">📰 ข่าวเด่น</button>
+    <button class="btn" style="background: #2196F3; color: white;" onclick="sendCommand('เปิดบลูทูธ')">🎵 โหมดลำโพง</button>
     <button class="btn btn-chat" onclick="sendCommand('สรุปสเตตัสตัวเองให้ฟังหน่อย')">📊 เช็กสถานะน้อง Bit</button>
   </div>
 
@@ -50,11 +51,7 @@
         .then(text => {
             if (text.startsWith("OPEN:")) {
                 let url = text.substring(5);
-                let iframe = document.createElement("iframe");
-                iframe.style.display = "none";
-                iframe.src = url;
-                document.body.appendChild(iframe);
-                setTimeout(() => document.body.removeChild(iframe), 2000);
+                window.location.href = url;
             }
             setTimeout(()=>{ document.getElementById('status').style.display = 'none'; }, 2500);
         })

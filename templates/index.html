@@ -98,11 +98,7 @@
                 .then(text => {
                     if (text.startsWith("OPEN:")) {
                         let url = text.substring(5);
-                        let iframe = document.createElement("iframe");
-                        iframe.style.display = "none";
-                        iframe.src = url;
-                        document.body.appendChild(iframe);
-                        setTimeout(() => document.body.removeChild(iframe), 2000);
+                        window.location.href = url;
                     }
                     setTimeout(() => {
                         document.getElementById('sending').style.display = 'none';
