@@ -13,7 +13,7 @@ app = Flask(__name__)
 # --- CONFIGURATION ---
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 if not GEMINI_API_KEY:
-    print("⚠️ คำเตือน: ยังไม่ได้ตั้งค่า GEMINI_API_KEY ใน Environment Variables!")
+    print("Warning: GEMINI_API_KEY is not set in Environment Variables!")
 genai.configure(api_key=GEMINI_API_KEY)
 model = genai.GenerativeModel('gemini-1.5-flash')
 
@@ -166,7 +166,7 @@ def ui_chat():
     if not user_input:
         return "Empty message", 400
         
-    print(f"\n🎙️ Voice Input from Phone: '{user_input}'")
+    print(f"\nVoice Input from Phone: '{user_input}'")
     
     # --- FAST TRACK (ระบบคำสั่งด่วน ลัดคิว AI) ---
     fast_track_response = None
