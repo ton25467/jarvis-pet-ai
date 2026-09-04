@@ -9,6 +9,7 @@ import json
 import threading
 import logging
 from dotenv import load_dotenv
+import urllib.parse
 
 # Load environment variables from .env file
 load_dotenv()
@@ -30,7 +31,6 @@ if not GEMINI_API_KEY:
 genai.configure(api_key=GEMINI_API_KEY)
 model = genai.GenerativeModel('gemini-3.8-flash')
 
-PENDING_RESPONSES = []
 DB_FILE = 'pet_memory.db'
 
 # --- DATABASE FUNCTIONS ---
@@ -46,6 +46,11 @@ def init_db():
     c.execute('''CREATE TABLE IF NOT EXISTS state (
                     key TEXT PRIMARY KEY,
                     value TEXT
+                 )''')
+    # Use SQLite as a thread-safe Queue instead of global list
+    c.execute('''CREATE TABLE IF NOT EXISTS command_queue (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    payload TEXT
                  )''')
     conn.commit()
     conn.close()
@@ -73,6 +78,26 @@ def get_states():
     rows = c.fetchall()
     conn.close()
     return {k: v for k, v in rows}
+
+def enqueue_response(payload):
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("INSERT INTO command_queue (payload) VALUES (?)", (json.dumps(payload),))
+    conn.commit()
+    conn.close()
+
+def dequeue_response():
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("SELECT id, payload FROM command_queue ORDER BY id ASC LIMIT 1")
+    row = c.fetchone()
+    if row:
+        c.execute("DELETE FROM command_queue WHERE id = ?", (row[0],))
+        conn.commit()
+        conn.close()
+        return json.loads(row[1])
+    conn.close()
+    return None
 
 # --- TOOL FUNCTIONS ---
 WEATHER_API_KEY = "ca3dc2dd9ad642389c062138260409"
@@ -114,6 +139,46 @@ def text_to_speech(text, filename):
     except Exception as e:
         logging.error(f"TTS Error: {e}")
 
+# --- INTENT ROUTING (STRATEGY PATTERN) ---
+def handle_mail(user_input):
+    return {"text": f"ด่วนเลยครับเจ้านาย {get_gmail_unread()}", "emotion": "mail", "mode": "stream", "url": None}
+
+def handle_calc(user_input):
+    return {"text": "เปิดเครื่องคิดเลขให้แล้วครับ หรือจะบอกโจทย์ให้ผมคิดเลขให้เลยก็ได้นะครับ", "emotion": "calc", "mode": "stream", "url": "https://www.google.com/search?q=calculator"}
+
+def handle_web(user_input):
+    return {"text": "เปิดกูเกิ้ลให้แล้วครับเจ้านาย", "emotion": "web", "mode": "stream", "url": "https://www.google.com"}
+
+def handle_netflix(user_input):
+    return {"text": "เตรียมป๊อปคอร์นให้พร้อมครับ เปิดเน็ตฟลิกซ์ให้แล้ว", "emotion": "web", "mode": "stream", "url": "https://www.netflix.com"}
+
+def handle_youtube(user_input):
+    query = user_input.lower().replace("เปิด", "").replace("ค้นหา", "").replace("ใน", "").replace("youtube", "").replace("ยูทูป", "").strip()
+    url = f"https://www.youtube.com/results?search_query={urllib.parse.quote(query)}" if query else "https://www.youtube.com"
+    return {"text": "เปิดยูทูปให้แล้วครับ เพลิดเพลินได้เลย", "emotion": "web", "mode": "stream", "url": url}
+
+def handle_spotify(user_input):
+    return {"text": "เปิดสปอติฟายให้แล้วครับ ขอให้สนุกกับเสียงเพลง", "emotion": "music", "mode": "stream", "url": "spotify:"}
+
+def handle_weather(user_input):
+    return {"text": f"รายงานด่วนครับ {get_weather()} และ {get_rain_forecast()}", "emotion": "weather", "mode": "stream", "url": None}
+
+def handle_bluetooth(user_input):
+    text = "สลับเข้าสู่โหมดลำโพงบลูทูธแล้วครับ กรุณาเปิดบลูทูธที่มือถือแล้วค้นหาชื่อบอร์ดเพื่อเชื่อมต่อนะครับ หากต้องการกลับสู่ระบบผู้ช่วย กรุณากดปุ่มรีเซ็ตที่บอร์ดครับ"
+    return {"text": text, "emotion": "happy", "mode": "bluetooth", "url": None}
+
+# Dictionary Mapping for Intents
+INTENT_ROUTES = {
+    ("เช็คเมล", "มีเมล"): handle_mail,
+    ("เครื่องคิดเลข", "คิดเลข"): handle_calc,
+    ("เปิดเว็บ", "เปิด google", "กูเกิ้ล"): handle_web,
+    ("เน็ตฟลิกซ์", "netflix"): handle_netflix,
+    ("youtube", "ยูทูป"): handle_youtube,
+    ("spotify", "สปอติ"): handle_spotify,
+    ("สภาพอากาศ", "ฝนตก"): handle_weather,
+    ("bluetooth", "บลูทูธ", "บลูทูต", "บลูทูด", "บลูธูท", "ลำโพง", "ฟังเพลง"): handle_bluetooth
+}
+
 # --- BACKGROUND AI TASK ---
 def process_ai_response(user_input, states, history):
     logging.info(f"🧠 Gemini is thinking about: {user_input}")
@@ -132,11 +197,9 @@ def process_ai_response(user_input, states, history):
     prompt += f"user: {user_input}\n"
     
     try:
-        # Generate content with Gemini
         response = model.generate_content(prompt)
         ai_reply = response.text.strip()
         
-        # Clean JSON if it has markdown formatting
         if ai_reply.startswith("```json"):
             ai_reply = ai_reply.replace("```json", "").replace("```", "").strip()
             
@@ -149,15 +212,12 @@ def process_ai_response(user_input, states, history):
             emotion = "happy"
             
         logging.info(f"✅ Gemini replied: {reply_text} (Emotion: {emotion})")
-        
         save_memory("assistant", reply_text)
         
-        # Generate TTS
         wav_out = "temp_out.wav"
         text_to_speech(reply_text, wav_out)
         
-        # Queue for ESP32
-        PENDING_RESPONSES.append({
+        enqueue_response({
             "text": reply_text,
             "emotion": emotion,
             "mode": "stream"
@@ -165,7 +225,7 @@ def process_ai_response(user_input, states, history):
         
     except Exception as e:
         logging.error(f"❌ Gemini API Error: {e}")
-        PENDING_RESPONSES.append({
+        enqueue_response({
             "text": "ระบบสมองคลาวด์มีปัญหาขัดข้องครับเจ้านาย",
             "emotion": "sad",
             "mode": "stream"
@@ -187,107 +247,51 @@ def ui_chat():
         return "Empty message", 400
         
     logging.info(f"Voice Input from Phone: '{user_input}'")
+    user_input_lower = user_input.lower()
     
-    # --- FAST TRACK (ระบบคำสั่งด่วน ลัดคิว AI) ---
-    fast_track_response = None
-    fast_emotion = "happy"
-    fast_mode = "stream"
-    
-    if "เช็คเมล" in user_input or "มีเมล" in user_input:
-        mail_status = get_gmail_unread()
-        fast_track_response = f"ด่วนเลยครับเจ้านาย {mail_status}"
-        fast_emotion = "mail"
-    
-    elif "เครื่องคิดเลข" in user_input or "คิดเลข" in user_input:
-        fast_track_response = "เปิดเครื่องคิดเลขให้แล้วครับ หรือจะบอกโจทย์ให้ผมคิดเลขให้เลยก็ได้นะครับ"
-        fast_emotion = "calc"
-        
-    elif "เปิดเว็บ" in user_input or "เปิด google" in user_input.lower() or "กูเกิ้ล" in user_input:
-        fast_track_response = "เปิดกูเกิ้ลให้แล้วครับเจ้านาย"
-        fast_emotion = "web"
-
-    elif "เน็ตฟลิกซ์" in user_input or "netflix" in user_input.lower():
-        fast_track_response = "เตรียมป๊อปคอร์นให้พร้อมครับ เปิดเน็ตฟลิกซ์ให้แล้ว"
-        fast_emotion = "web"
-
-    elif "youtube" in user_input.lower() or "ยูทูป" in user_input:
-        fast_track_response = "เปิดยูทูปให้แล้วครับ เพลิดเพลินได้เลย"
-        fast_emotion = "web"
-        
-    elif "spotify" in user_input.lower() or "สปอติ" in user_input:
-        fast_track_response = "เปิดสปอติฟายให้แล้วครับ ขอให้สนุกกับเสียงเพลง"
-        fast_emotion = "music"
-        
-    elif "สภาพอากาศ" in user_input or "ฝนตก" in user_input:
-        weather = get_weather()
-        rain = get_rain_forecast()
-        fast_track_response = f"รายงานด่วนครับ {weather} และ {rain}"
-        fast_emotion = "weather"
-        
-    elif "bluetooth" in user_input.lower() or "บลูทูธ" in user_input or "บลูทูต" in user_input or "บลูทูด" in user_input or "บลูธูท" in user_input or "ลำโพง" in user_input or "ฟังเพลง" in user_input:
-        fast_track_response = "สลับเข้าสู่โหมดลำโพงบลูทูธแล้วครับ กรุณาเปิดบลูทูธที่มือถือแล้วค้นหาชื่อบอร์ดเพื่อเชื่อมต่อนะครับ หากต้องการกลับสู่ระบบผู้ช่วย กรุณากดปุ่มรีเซ็ตที่บอร์ดครับ"
-        fast_emotion = "happy"
-        fast_mode = "bluetooth"
-        
-    if fast_track_response:
-        logging.info(f"⚡ FAST TRACK TRIGGERED: {fast_track_response}")
-        wav_out = "temp_out.wav"
-        text_to_speech(fast_track_response, wav_out)
-        response_payload = {
-            "text": fast_track_response,
-            "emotion": fast_emotion,
-            "mode": fast_mode
-        }
-        PENDING_RESPONSES.append(response_payload)
-        
-        # Determine if we should send an OPEN command to the client browser (for mobile)
-        if "เปิดเว็บ" in user_input or "เปิด google" in user_input.lower() or "กูเกิ้ล" in user_input:
-            return "OPEN:https://www.google.com"
-        elif "เครื่องคิดเลข" in user_input or "คิดเลข" in user_input:
-            return "OPEN:https://www.google.com/search?q=calculator"
-        elif "เน็ตฟลิกซ์" in user_input or "netflix" in user_input.lower():
-            return "OPEN:https://www.netflix.com"
-        elif "youtube" in user_input.lower() or "ยูทูป" in user_input:
-            # Extract search query if user says "ค้นหา...ในยูทูป" or "เปิด...ในยูทูป"
-            import urllib.parse
-            query = user_input.lower().replace("เปิด", "").replace("ค้นหา", "").replace("ใน", "").replace("youtube", "").replace("ยูทูป", "").strip()
-            if query:
-                encoded_query = urllib.parse.quote(query)
-                return f"OPEN:https://www.youtube.com/results?search_query={encoded_query}"
-            return "OPEN:https://www.youtube.com"
-        elif "spotify" in user_input.lower() or "สปอติ" in user_input:
-            return "OPEN:spotify:"
+    # --- FAST TRACK (Strategy Pattern) ---
+    for keywords, handler in INTENT_ROUTES.items():
+        if any(kw in user_input_lower for kw in keywords):
+            result = handler(user_input)
             
-        return "Fast Track Success"
-        
+            logging.info(f"⚡ FAST TRACK TRIGGERED: {result['text']}")
+            wav_out = "temp_out.wav"
+            text_to_speech(result['text'], wav_out)
+            
+            enqueue_response({
+                "text": result['text'],
+                "emotion": result['emotion'],
+                "mode": result['mode']
+            })
+            
+            if result['url']:
+                return f"OPEN:{result['url']}"
+            return "Fast Track Success"
+            
     # --- NORMAL AI THINKING (Slow Track) ---
     save_memory("user", user_input)
     states = get_states()
     history = get_history(limit=5)
     
-    # แจ้ง ESP32 ให้เล่นเสียง offline filler (เช่น "ขอคิดแป๊บนะครับ") ระหว่างรอคลาวด์ประมวลผล
-    PENDING_RESPONSES.append({
+    enqueue_response({
         "text": "กำลังคิด...",
         "emotion": "idle",
         "mode": "offline",
         "file": "/think.wav"
     })
     
-    # Run Gemini in background thread
     threading.Thread(target=process_ai_response, args=(user_input, states, history)).start()
-    
     return "Thinking...", 200
 
 @app.route("/api/poll", methods=["GET"])
 def api_poll():
-    if PENDING_RESPONSES:
-        response_data = PENDING_RESPONSES.pop(0)
+    response_data = dequeue_response()
+    if response_data:
         return jsonify({
             "has_audio": True,
             "data": response_data
         })
-    else:
-        return jsonify({"has_audio": False})
+    return jsonify({"has_audio": False})
 
 @app.route("/api/audio", methods=["GET"])
 def api_audio():
@@ -299,7 +303,6 @@ def api_audio():
 if __name__ == "__main__":
     init_db()
     logging.info("☁️ Cloud AI Server is ready! Powered by Google Gemini.")
-    # For local testing, we run on 5000. When on Render, it uses PORT env var.
     port = int(os.environ.get("PORT", 5000))
     from waitress import serve
     serve(app, host="0.0.0.0", port=port)
