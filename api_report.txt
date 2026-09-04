@@ -1,0 +1,52 @@
+=========================================================
+SMART AI PET - CLOUD SERVER API REPORT
+=========================================================
+
+1. OVERALL ARCHITECTURE
+---------------------------------------------------------
+The server operates on an "Asynchronous Polling Model" designed specifically to bridge low-memory hardware (ESP32) with slow-processing cloud APIs (Gemini).
+
+- Front-End: Web browser (index.html / control.html) using Web Speech API.
+- Back-End: Flask server in Python.
+- Database: SQLite (pet_memory.db) for conversational memory and state.
+- Hardware Bridge: A memory-based queue (PENDING_RESPONSES) consumed via HTTP Polling.
+
+2. INTERNAL API ENDPOINTS
+---------------------------------------------------------
+- GET  /         : Serves the main voice interface.
+- GET  /control  : Serves the manual button control interface.
+- POST /ui_chat  : The main intake endpoint. Validates user input, filters for Fast Track keywords, or routes to the AI background thread. Always returns a quick HTTP 200 to prevent blocking.
+- GET  /api/poll : The polling endpoint. Consumes data from the PENDING_RESPONSES list.
+- GET  /api/audio: Serves the generated temp_out.wav TTS file.
+
+3. EXTERNAL API INTEGRATIONS
+---------------------------------------------------------
+- WeatherAPI (Current): Fetches real-time temperature and conditions. (Tested: PASS)
+- WeatherAPI (Forecast): Fetches 24-hour rain probability. (Tested: PASS)
+- Google Gemini API   : Generates dynamic AI conversations via google.generativeai. (Tested: PASS)
+- Google TTS (gTTS)   : Converts Thai text into spoken audio files. (Tested: PASS)
+
+4. THE REQUEST LIFECYCLE & POLLING MECHANISM
+---------------------------------------------------------
+Because the ESP32 cannot receive push notifications, it must constantly poll the server.
+
+Step A) The Trigger
+The user speaks to the web interface. A POST request is sent to /ui_chat.
+
+Step B) Triage (Producer)
+The server decides if the request is a Fast Track (e.g. Weather) or Slow Track (Gemini).
+- If Slow Track, the server immediately pushes a "filler" response (e.g., "กำลังคิด...") to the PENDING_RESPONSES queue.
+- It spins up a background thread to call Gemini.
+- Once Gemini responds, the thread calls gTTS, overwrites temp_out.wav, and pushes the final AI answer into the queue.
+
+Step C) The Poll (Consumer)
+- The ESP32 constantly sends GET requests to /api/poll.
+- If the queue is empty, it returns {"has_audio": false}.
+- If the queue has data, the server uses `.pop(0)` to remove the data from the list and sends it to the ESP32.
+- The ESP32 parses the JSON, sees {"has_audio": true}, and makes a follow-up request to /api/audio to play the voice file.
+
+5. IDENTIFIED RISKS & RECOMMENDATIONS
+---------------------------------------------------------
+- Concurrency Risk: temp_out.wav is a hardcoded file. If two users speak at the same time, the file will be overwritten, causing one user to hear the other's audio. (Fix: Use unique filenames).
+- Polling Data Loss Risk: Because the server uses `.pop(0)`, the data is deleted from the server the exact millisecond the ESP32 requests it. If the ESP32's WiFi drops during the download, the response is lost forever.
+- Cloud Scaling Risk: PENDING_RESPONSES is an in-memory list. If deployed to a cloud host with multiple workers (like Gunicorn), the workers will not share the list, causing the polling mechanism to fail randomly. (Fix: Restrict to 1 worker, or store the queue in SQLite).

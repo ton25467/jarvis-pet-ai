@@ -4,18 +4,31 @@ from datetime import datetime
 from flask import Flask, request, jsonify, render_template, send_file
 import google.generativeai as genai
 from gtts import gTTS
-import urllib.request
+import requests
 import json
 import threading
+import logging
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Configure logging
+logging.basicConfig(
+    filename='server.log',
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
 
 app = Flask(__name__)
 
 # --- CONFIGURATION ---
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 if not GEMINI_API_KEY:
-    print("Warning: GEMINI_API_KEY is not set in Environment Variables!")
+    logging.warning("GEMINI_API_KEY is not set in Environment Variables!")
 genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel('gemini-1.5-flash')
+model = genai.GenerativeModel('gemini-3.8-flash')
 
 PENDING_RESPONSES = []
 DB_FILE = 'pet_memory.db'
@@ -62,25 +75,32 @@ def get_states():
     return {k: v for k, v in rows}
 
 # --- TOOL FUNCTIONS ---
+WEATHER_API_KEY = "ca3dc2dd9ad642389c062138260409"
+
 def get_weather():
     try:
-        url = "https://wttr.in/Bangkok?format=%t+%C"
-        req = urllib.request.Request(url, headers={'User-Agent': 'curl/7.68.0'})
-        with urllib.request.urlopen(req, timeout=5) as response:
-            return response.read().decode('utf-8').strip()
+        url = f"http://api.weatherapi.com/v1/current.json?key={WEATHER_API_KEY}&q=Bangkok"
+        response = requests.get(url, timeout=5)
+        data = response.json()
+        temp_c = data['current']['temp_c']
+        condition = data['current']['condition']['text']
+        return f"{temp_c}°C {condition}"
     except Exception as e:
         return f"ไม่สามารถดึงข้อมูลสภาพอากาศได้: {e}"
 
 def get_rain_forecast():
     try:
-        url = "https://wttr.in/Bangkok?format=%p"
-        req = urllib.request.Request(url, headers={'User-Agent': 'curl/7.68.0'})
-        with urllib.request.urlopen(req, timeout=5) as response:
-            rain = response.read().decode('utf-8').strip()
-            if rain and rain != "0.0mm":
-                return f"มีโอกาสฝนตก {rain}"
-            return "ไม่มีแนวโน้มฝนตกหนัก"
-    except:
+        url = f"http://api.weatherapi.com/v1/forecast.json?key={WEATHER_API_KEY}&q=Bangkok&days=1"
+        response = requests.get(url, timeout=5)
+        data = response.json()
+        forecast = data['forecast']['forecastday'][0]['day']
+        chance_of_rain = forecast.get('daily_chance_of_rain', 0)
+        precip_mm = forecast.get('totalprecip_mm', 0.0)
+        
+        if int(chance_of_rain) > 0 or precip_mm > 0.0:
+            return f"มีโอกาสฝนตก {chance_of_rain}% (ปริมาณ {precip_mm}mm)"
+        return "ไม่มีแนวโน้มฝนตกหนัก"
+    except Exception as e:
         return "ดึงข้อมูลฝนไม่ได้"
 
 def get_gmail_unread():
@@ -92,11 +112,11 @@ def text_to_speech(text, filename):
         tts = gTTS(text=text, lang='th')
         tts.save(filename)
     except Exception as e:
-        print(f"TTS Error: {e}")
+        logging.error(f"TTS Error: {e}")
 
 # --- BACKGROUND AI TASK ---
 def process_ai_response(user_input, states, history):
-    print(f"🧠 Gemini is thinking about: {user_input}")
+    logging.info(f"🧠 Gemini is thinking about: {user_input}")
     
     # Build Prompt
     system_prompt = f"""คุณคือ Smart AI Pet หุ่นยนต์สัตว์เลี้ยง AI อัจฉริยะ นิสัยกวนๆ ขี้เล่น และเป็นมิตร
@@ -128,7 +148,7 @@ def process_ai_response(user_input, states, history):
             reply_text = ai_reply
             emotion = "happy"
             
-        print(f"✅ Gemini replied: {reply_text} (Emotion: {emotion})")
+        logging.info(f"✅ Gemini replied: {reply_text} (Emotion: {emotion})")
         
         save_memory("assistant", reply_text)
         
@@ -144,7 +164,7 @@ def process_ai_response(user_input, states, history):
         })
         
     except Exception as e:
-        print(f"❌ Gemini API Error: {e}")
+        logging.error(f"❌ Gemini API Error: {e}")
         PENDING_RESPONSES.append({
             "text": "ระบบสมองคลาวด์มีปัญหาขัดข้องครับเจ้านาย",
             "emotion": "sad",
@@ -166,11 +186,12 @@ def ui_chat():
     if not user_input:
         return "Empty message", 400
         
-    print(f"\nVoice Input from Phone: '{user_input}'")
+    logging.info(f"Voice Input from Phone: '{user_input}'")
     
     # --- FAST TRACK (ระบบคำสั่งด่วน ลัดคิว AI) ---
     fast_track_response = None
     fast_emotion = "happy"
+    fast_mode = "stream"
     
     if "เช็คเมล" in user_input or "มีเมล" in user_input:
         mail_status = get_gmail_unread()
@@ -206,24 +227,16 @@ def ui_chat():
     elif "บลูทูธ" in user_input.lower() or "ลำโพง" in user_input or "ฟังเพลง" in user_input:
         fast_track_response = "สลับเข้าสู่โหมดลำโพงบลูทูธแล้วครับ หากต้องการกลับสู่ระบบผู้ช่วย กรุณากดปุ่มรีเซ็ตที่บอร์ดนะครับ"
         fast_emotion = "happy"
-        wav_out = "temp_out.wav"
-        text_to_speech(fast_track_response, wav_out)
-        response_payload = {
-            "text": fast_track_response,
-            "emotion": fast_emotion,
-            "mode": "bluetooth"
-        }
-        PENDING_RESPONSES.append(response_payload)
-        return "Fast Track Success"
+        fast_mode = "bluetooth"
         
     if fast_track_response:
-        print(f"⚡ FAST TRACK TRIGGERED: {fast_track_response}")
+        logging.info(f"⚡ FAST TRACK TRIGGERED: {fast_track_response}")
         wav_out = "temp_out.wav"
         text_to_speech(fast_track_response, wav_out)
         response_payload = {
             "text": fast_track_response,
             "emotion": fast_emotion,
-            "mode": "stream"
+            "mode": fast_mode
         }
         PENDING_RESPONSES.append(response_payload)
         
@@ -285,7 +298,8 @@ def api_audio():
 
 if __name__ == "__main__":
     init_db()
-    print("☁️ Cloud AI Server is ready! Powered by Google Gemini.")
+    logging.info("☁️ Cloud AI Server is ready! Powered by Google Gemini.")
     # For local testing, we run on 5000. When on Render, it uses PORT env var.
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    from waitress import serve
+    serve(app, host="0.0.0.0", port=port)

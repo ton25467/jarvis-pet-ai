@@ -1,0 +1,44 @@
+=========================================================
+SMART AI PET - API LIST
+=========================================================
+
+1. INTERNAL API ENDPOINTS (Exposed by Flask Server)
+---------------------------------------------------------
+Endpoint: GET /
+Purpose : Serves the main voice interface (index.html).
+
+Endpoint: GET /control
+Purpose : Serves the manual button control interface (control.html).
+
+Endpoint: POST /ui_chat
+Purpose : The main intake endpoint for chat messages and voice input.
+Payload : Form data `message` containing the user's text.
+Behavior: Validates input, handles Fast Track commands, or spawns Gemini AI thread.
+
+Endpoint: GET /api/poll
+Purpose : Hardware polling endpoint for the ESP32.
+Returns : JSON containing pending audio/text commands from the PENDING_RESPONSES queue.
+
+Endpoint: GET /api/audio
+Purpose : Serves the generated Text-to-Speech audio file.
+Returns : temp_out.wav (audio/wav).
+
+
+2. EXTERNAL APIs (Consumed by the Server)
+---------------------------------------------------------
+Service: WeatherAPI (api.weatherapi.com)
+Usage  : 
+  - /v1/current.json (Gets current temperature and conditions)
+  - /v1/forecast.json (Gets 24-hour chance of rain)
+Auth   : API Key
+
+Service: Google Gemini API (google.generativeai)
+Usage  : Generates dynamic AI conversations.
+Auth   : GEMINI_API_KEY environment variable.
+
+Service: Google Text-to-Speech (gTTS)
+Usage  : Converts Thai text into spoken .wav audio files.
+Auth   : None (Public API).
+
+Service: Gmail (Mocked)
+Usage  : Currently returns a hardcoded string. Not a real API connection.

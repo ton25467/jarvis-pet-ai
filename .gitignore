@@ -3,3 +3,6 @@ __pycache__
 venv
 temp_out.wav
 pet_memory.db
+.env
+.env.*
+server.log
