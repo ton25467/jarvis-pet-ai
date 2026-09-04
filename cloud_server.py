@@ -186,7 +186,11 @@ def ui_chat():
         fast_track_response = "เปิดกูเกิ้ลให้แล้วครับเจ้านาย"
         fast_emotion = "web"
 
-    elif "เปิด youtube" in user_input.lower() or "ยูทูป" in user_input:
+    elif "เน็ตฟลิกซ์" in user_input or "netflix" in user_input.lower():
+        fast_track_response = "เตรียมป๊อปคอร์นให้พร้อมครับ เปิดเน็ตฟลิกซ์ให้แล้ว"
+        fast_emotion = "web"
+
+    elif "youtube" in user_input.lower() or "ยูทูป" in user_input:
         fast_track_response = "เปิดยูทูปให้แล้วครับ เพลิดเพลินได้เลย"
         fast_emotion = "web"
         
@@ -227,7 +231,15 @@ def ui_chat():
         # Determine if we should send an OPEN command to the client browser (for mobile)
         if "เปิดเว็บ" in user_input or "เปิด google" in user_input.lower() or "กูเกิ้ล" in user_input:
             return "OPEN:https://www.google.com"
-        elif "เปิด youtube" in user_input.lower() or "ยูทูป" in user_input:
+        elif "เน็ตฟลิกซ์" in user_input or "netflix" in user_input.lower():
+            return "OPEN:https://www.netflix.com"
+        elif "youtube" in user_input.lower() or "ยูทูป" in user_input:
+            # Extract search query if user says "ค้นหา...ในยูทูป" or "เปิด...ในยูทูป"
+            import urllib.parse
+            query = user_input.lower().replace("เปิด", "").replace("ค้นหา", "").replace("ใน", "").replace("youtube", "").replace("ยูทูป", "").strip()
+            if query:
+                encoded_query = urllib.parse.quote(query)
+                return f"OPEN:https://www.youtube.com/results?search_query={encoded_query}"
             return "OPEN:https://www.youtube.com"
         elif "spotify" in user_input.lower() or "สปอติ" in user_input:
             return "OPEN:spotify:"
