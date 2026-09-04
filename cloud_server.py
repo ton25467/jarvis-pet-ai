@@ -65,7 +65,7 @@ def get_states():
 def get_weather():
     try:
         url = "https://wttr.in/Bangkok?format=%t+%C"
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        req = urllib.request.Request(url, headers={'User-Agent': 'curl/7.68.0'})
         with urllib.request.urlopen(req, timeout=5) as response:
             return response.read().decode('utf-8').strip()
     except Exception as e:
@@ -74,7 +74,7 @@ def get_weather():
 def get_rain_forecast():
     try:
         url = "https://wttr.in/Bangkok?format=%p"
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        req = urllib.request.Request(url, headers={'User-Agent': 'curl/7.68.0'})
         with urllib.request.urlopen(req, timeout=5) as response:
             rain = response.read().decode('utf-8').strip()
             if rain and rain != "0.0mm":
