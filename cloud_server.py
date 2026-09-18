@@ -55,48 +55,68 @@ def init_db():
     conn.commit()
     conn.close()
 
+# Ensure database tables exist upon server startup (especially on Render / Gunicorn)
+init_db()
+
 def save_memory(role, content):
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute("INSERT INTO memory (timestamp, role, content) VALUES (?, ?, ?)", 
-              (datetime.now().isoformat(), role, content))
-    conn.commit()
-    conn.close()
-
-def get_history(limit=5):
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute("SELECT role, content FROM memory ORDER BY id DESC LIMIT ?", (limit,))
-    rows = c.fetchall()
-    conn.close()
-    return list(reversed(rows))
-
-def get_states():
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute("SELECT key, value FROM state")
-    rows = c.fetchall()
-    conn.close()
-    return {k: v for k, v in rows}
-
-def enqueue_response(payload):
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute("INSERT INTO command_queue (payload) VALUES (?)", (json.dumps(payload),))
-    conn.commit()
-    conn.close()
-
-def dequeue_response():
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute("SELECT id, payload FROM command_queue ORDER BY id ASC LIMIT 1")
-    row = c.fetchone()
-    if row:
-        c.execute("DELETE FROM command_queue WHERE id = ?", (row[0],))
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        c = conn.cursor()
+        c.execute("INSERT INTO memory (timestamp, role, content) VALUES (?, ?, ?)", 
+                  (datetime.now().isoformat(), role, content))
         conn.commit()
         conn.close()
-        return json.loads(row[1])
-    conn.close()
+    except Exception as e:
+        logging.error(f"DB save_memory error: {e}")
+
+def get_history(limit=5):
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        c = conn.cursor()
+        c.execute("SELECT role, content FROM memory ORDER BY id DESC LIMIT ?", (limit,))
+        rows = c.fetchall()
+        conn.close()
+        return list(reversed(rows))
+    except Exception as e:
+        logging.error(f"DB get_history error: {e}")
+        return []
+
+def get_states():
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        c = conn.cursor()
+        c.execute("SELECT key, value FROM state")
+        rows = c.fetchall()
+        conn.close()
+        return {k: v for k, v in rows}
+    except Exception as e:
+        logging.error(f"DB get_states error: {e}")
+        return {}
+
+def enqueue_response(payload):
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        c = conn.cursor()
+        c.execute("INSERT INTO command_queue (payload) VALUES (?)", (json.dumps(payload),))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        logging.error(f"DB enqueue error: {e}")
+
+def dequeue_response():
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        c = conn.cursor()
+        c.execute("SELECT id, payload FROM command_queue ORDER BY id ASC LIMIT 1")
+        row = c.fetchone()
+        if row:
+            c.execute("DELETE FROM command_queue WHERE id = ?", (row[0],))
+            conn.commit()
+            conn.close()
+            return json.loads(row[1])
+        conn.close()
+    except Exception as e:
+        logging.error(f"DB dequeue error: {e}")
     return None
 
 # --- TOOL FUNCTIONS ---
