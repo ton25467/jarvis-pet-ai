@@ -102,31 +102,36 @@ def dequeue_response():
 # --- TOOL FUNCTIONS ---
 WEATHER_API_KEY = "ca3dc2dd9ad642389c062138260409"
 
-def get_weather():
-    try:
-        url = f"http://api.weatherapi.com/v1/current.json?key={WEATHER_API_KEY}&q=Bangkok"
-        response = requests.get(url, timeout=5)
-        data = response.json()
-        temp_c = data['current']['temp_c']
-        condition = data['current']['condition']['text']
-        return f"{temp_c}°C {condition}"
-    except Exception as e:
-        return f"ไม่สามารถดึงข้อมูลสภาพอากาศได้: {e}"
+def translate_weather_condition(text):
+    t = text.lower()
+    if "sunny" in t: return "แดดจัด ท้องฟ้าแจ่มใส"
+    if "clear" in t: return "ท้องฟ้าโปร่ง"
+    if "partly cloudy" in t: return "มีเมฆบางส่วน"
+    if "cloudy" in t or "overcast" in t: return "มีเมฆมาก ท้องฟ้าครึ้ม"
+    if "thunder" in t: return "มีพายุฝนฟ้าคะนอง"
+    if "heavy rain" in t: return "มีฝนตกหนัก"
+    if "moderate rain" in t: return "มีฝนตกปานกลาง"
+    if "light rain" in t or "patchy rain" in t or "drizzle" in t or "shower" in t: return "มีฝนตกเล็กน้อยบางพื้นที่"
+    if "rain" in t: return "มีฝนตก"
+    if "mist" in t or "fog" in t or "haze" in t: return "มีหมอกบาง"
+    return text
 
-def get_rain_forecast():
+def get_weather_report():
     try:
         url = f"http://api.weatherapi.com/v1/forecast.json?key={WEATHER_API_KEY}&q=Bangkok&days=1"
         response = requests.get(url, timeout=5)
         data = response.json()
-        forecast = data['forecast']['forecastday'][0]['day']
-        chance_of_rain = forecast.get('daily_chance_of_rain', 0)
-        precip_mm = forecast.get('totalprecip_mm', 0.0)
+        temp_c = int(round(data['current']['temp_c']))
+        raw_cond = data['current']['condition']['text']
+        condition = translate_weather_condition(raw_cond)
         
-        if int(chance_of_rain) > 0 or precip_mm > 0.0:
-            return f"มีโอกาสฝนตก {chance_of_rain}% (ปริมาณ {precip_mm}mm)"
-        return "ไม่มีแนวโน้มฝนตกหนัก"
+        forecast = data['forecast']['forecastday'][0]['day']
+        chance_of_rain = int(forecast.get('daily_chance_of_rain', 0))
+        
+        rain_text = f"โอกาสฝนตกวันนี้ประมาณ {chance_of_rain} เปอร์เซ็นต์ครับ" if chance_of_rain > 0 else "วันนี้ไม่มีแนวโน้มฝนตกครับ"
+        return f"สภาพอากาศกรุงเทพฯ ตอนนี้อุณหภูมิประมาณ {temp_c} องศาเซลเซียส {condition} {rain_text}"
     except Exception as e:
-        return "ดึงข้อมูลฝนไม่ได้"
+        return "ขออภัยครับ ไม่สามารถดึงข้อมูลสภาพอากาศได้ในขณะนี้"
 
 def get_gmail_unread():
     return "คุณมีอีเมลใหม่ 2 ฉบับ จากหัวหน้างาน และจากช้อปปี้ครับ"
@@ -161,7 +166,7 @@ def handle_spotify(user_input):
     return {"text": "เปิดสปอติฟายให้แล้วครับ ขอให้สนุกกับเสียงเพลง", "emotion": "music", "mode": "stream", "url": "spotify:"}
 
 def handle_weather(user_input):
-    return {"text": f"รายงานด่วนครับ {get_weather()} และ {get_rain_forecast()}", "emotion": "weather", "mode": "stream", "url": None}
+    return {"text": get_weather_report(), "emotion": "weather", "mode": "stream", "url": None}
 
 def handle_bluetooth(user_input):
     text = "สลับเข้าสู่โหมดลำโพงบลูทูธแล้วครับ กรุณาเปิดบลูทูธที่มือถือแล้วค้นหาชื่อบอร์ดเพื่อเชื่อมต่อนะครับ หากต้องการกลับสู่ระบบผู้ช่วย กรุณากดปุ่มรีเซ็ตที่บอร์ดครับ"
