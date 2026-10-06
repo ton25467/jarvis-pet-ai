@@ -164,55 +164,81 @@ def text_to_speech(text, filename):
     except Exception as e:
         logging.error(f"TTS Error: {e}")
 
-# --- INTENT ROUTING (STRATEGY PATTERN) ---
+# --- F.R.I.D.A.Y. STARK PROTOCOL HANDLERS ---
+def handle_focus(user_input):
+    return {"text": "รับทราบค่ะเจ้านาย กำลังเปิดใช้งาน Protocol: FOCUS ตัดสัญญาณรบกวนและเริ่มบันทึกสมาธิการทำงานให้แล้วค่ะ", "emotion": "happy", "mode": "stream", "url": None}
+
+def handle_relax(user_input):
+    return {"text": "รับทราบค่ะเจ้านาย กำลังเปิดใช้งาน Protocol: RELAX ปรับบรรยากาศห้องให้ผ่อนคลายเรียบร้อยค่ะ", "emotion": "music", "mode": "stream", "url": None}
+
+def handle_alert(user_input):
+    return {"text": "ตรวจพบว่าคุณนั่งทำงานมานานเกินกำหนดค่ะเจ้านาย แนะนำให้ลุกขึ้นยืดเส้นยืดสายและพักสายตาสักครู่ค่ะ", "emotion": "sad", "mode": "stream", "url": None}
+
+def handle_standby(user_input):
+    return {"text": "กำลังสลับระบบ F.R.I.D.A.Y. เข้าสู่ Protocol: STANDBY ค่ะ ระบบรักษาความปลอดภัยยังคงทำงาน ราตรีสวัสดิ์ค่ะเจ้านาย", "emotion": "happy", "mode": "stream", "url": None}
+
+def handle_diagnostic(user_input):
+    now_str = datetime.now().strftime('%H:%M น.')
+    return {"text": f"รายงานสถานะระบบ F.R.I.D.A.Y. ประจำเวลา {now_str} ระบบคลาวด์ออนไลน์ 100% สัญญาณ ESP-NOW 2 สมองพร้อมปฏิบัติการค่ะเจ้านาย", "emotion": "happy", "mode": "stream", "url": None}
+
+def handle_time(user_input):
+    now_str = datetime.now().strftime('%H นาฬิกา %M นาที')
+    return {"text": f"ตอนนี้เวลา {now_str} ค่ะเจ้านาย", "emotion": "happy", "mode": "stream", "url": None}
+
 def handle_mail(user_input):
-    return {"text": f"ด่วนเลยครับเจ้านาย {get_gmail_unread()}", "emotion": "mail", "mode": "stream", "url": None}
+    return {"text": f"รายงานด่วนค่ะเจ้านาย {get_gmail_unread()}", "emotion": "mail", "mode": "stream", "url": None}
 
 def handle_calc(user_input):
-    return {"text": "เปิดเครื่องคิดเลขให้แล้วครับ หรือจะบอกโจทย์ให้ผมคิดเลขให้เลยก็ได้นะครับ", "emotion": "calc", "mode": "stream", "url": "https://www.google.com/search?q=calculator"}
+    return {"text": "เปิดโมดูลคำนวณตัวเลขให้แล้วค่ะเจ้านาย หรือจะบอกโจทย์ให้ดิฉันคำนวณให้เลยก็ได้นะคะ", "emotion": "calc", "mode": "stream", "url": "https://www.google.com/search?q=calculator"}
 
 def handle_web(user_input):
-    return {"text": "เปิดกูเกิ้ลให้แล้วครับเจ้านาย", "emotion": "web", "mode": "stream", "url": "https://www.google.com"}
+    return {"text": "เปิดกูเกิ้ลให้แล้วค่ะเจ้านาย พร้อมค้นหาข้อมูลค่ะ", "emotion": "web", "mode": "stream", "url": "https://www.google.com"}
 
 def handle_netflix(user_input):
-    return {"text": "เตรียมป๊อปคอร์นให้พร้อมครับ เปิดเน็ตฟลิกซ์ให้แล้ว", "emotion": "web", "mode": "stream", "url": "https://www.netflix.com"}
+    return {"text": "เปิดเน็ตฟลิกซ์ให้แล้วค่ะเจ้านาย พักผ่อนให้เต็มที่นะคะ", "emotion": "web", "mode": "stream", "url": "https://www.netflix.com"}
 
 def handle_youtube(user_input):
     query = user_input.lower().replace("เปิด", "").replace("ค้นหา", "").replace("ใน", "").replace("youtube", "").replace("ยูทูป", "").strip()
     url = f"https://www.youtube.com/results?search_query={urllib.parse.quote(query)}" if query else "https://www.youtube.com"
-    return {"text": "เปิดยูทูปให้แล้วครับ เพลิดเพลินได้เลย", "emotion": "web", "mode": "stream", "url": url}
+    return {"text": "เปิดยูทูปให้แล้วค่ะ เพลิดเพลินกับวิดีโอได้เลยค่ะเจ้านาย", "emotion": "web", "mode": "stream", "url": url}
 
 def handle_spotify(user_input):
-    return {"text": "เปิดสปอติฟายให้แล้วครับ ขอให้สนุกกับเสียงเพลง", "emotion": "music", "mode": "stream", "url": "spotify:"}
+    return {"text": "เปิดสปอติฟายให้แล้วค่ะเจ้านาย ขอให้มีความสุขกับเสียงดนตรีค่ะ", "emotion": "music", "mode": "stream", "url": "spotify:"}
 
 def handle_weather(user_input):
     return {"text": get_weather_report(), "emotion": "weather", "mode": "stream", "url": None}
 
-def handle_bluetooth(user_input):
-    text = "สลับเข้าสู่โหมดลำโพงบลูทูธแล้วครับ กรุณาเปิดบลูทูธที่มือถือแล้วค้นหาชื่อบอร์ดเพื่อเชื่อมต่อนะครับ หากต้องการกลับสู่ระบบผู้ช่วย กรุณากดปุ่มรีเซ็ตที่บอร์ดครับ"
-    return {"text": text, "emotion": "happy", "mode": "bluetooth", "url": None}
-
 # Dictionary Mapping for Intents
 INTENT_ROUTES = {
+    ("focus", "ทำงาน", "โฟกัส", "เริ่มงาน"): handle_focus,
+    ("relax", "พัก", "ผ่อนคลาย", "สบาย"): handle_relax,
+    ("เตือน", "alert", "พักสายตา"): handle_alert,
+    ("standby", "นอน", "ปิดระบบ", "ฝันดี"): handle_standby,
+    ("diagnostic", "สถานะ", "เช็กระบบ", "ตรวจระบบ"): handle_diagnostic,
+    ("กี่โมง", "เวลา"): handle_time,
     ("เช็คเมล", "มีเมล"): handle_mail,
     ("เครื่องคิดเลข", "คิดเลข"): handle_calc,
     ("เปิดเว็บ", "เปิด google", "กูเกิ้ล"): handle_web,
     ("เน็ตฟลิกซ์", "netflix"): handle_netflix,
     ("youtube", "ยูทูป"): handle_youtube,
-    ("spotify", "สปอติ"): handle_spotify,
-    ("สภาพอากาศ", "ฝนตก"): handle_weather,
-    ("bluetooth", "บลูทูธ", "บลูทูต", "บลูทูด", "บลูธูท", "ลำโพง", "ฟังเพลง"): handle_bluetooth
+    ("spotify", "สปอติ", "เพลง"): handle_spotify,
+    ("สภาพอากาศ", "ฝนตก", "อากาศ"): handle_weather,
 }
 
 # --- BACKGROUND AI TASK ---
 def process_ai_response(user_input, states, history):
-    logging.info(f"🧠 Gemini is thinking about: {user_input}")
+    logging.info(f"🧠 F.R.I.D.A.Y. is thinking about: {user_input}")
     
     # Build Prompt
-    system_prompt = f"""คุณคือ Smart AI Pet หุ่นยนต์สัตว์เลี้ยง AI อัจฉริยะ นิสัยกวนๆ ขี้เล่น และเป็นมิตร
+    system_prompt = f"""คุณคือ F.R.I.D.A.Y. (Female Replacement Intelligent Digital Assistant Youth) ระบบ AI ผู้ช่วยอัจฉริยะส่วนตัวของเจ้านาย (สไตล์ Stark Industries)
+บุคลิกภาพ:
+- สุภาพ สุขุม คล่องแคล่ว มีไหวพริบ และภักดีต่อเจ้านาย
+- เรียกผู้ใช้ว่า "เจ้านาย" หรือ "บอส" เสมอ
+- ตอบกระชับ ฉลาด ชัดเจน ไม่เกิน 2 ประโยค
+- สามารถแนะนำการเปิด Stark Protocols ได้ (เช่น Protocol: FOCUS, RELAX, STANDBY, DIAGNOSTIC)
 ข้อมูลปัจจุบัน:
-- สภาพอากาศ: {states.get('weather', 'ไม่ทราบ')}
-- อีเมล: {states.get('mail', 'ไม่ทราบ')}
+- สภาพอากาศ: {states.get('weather', 'พร้อมรายงาน')}
+- เวลาปัจจุบัน: {datetime.now().strftime('%H:%M น.')}
 ตอบสั้นๆ ไม่เกิน 2 ประโยค และตอบกลับเป็น JSON รูปแบบนี้เท่านั้น:
 {{"text": "คำตอบของคุณ", "emotion": "happy/sad/hangry/chonk/mail/weather/calc/web/music"}}"""
 

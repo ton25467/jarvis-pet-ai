@@ -1,49 +1,160 @@
 <!DOCTYPE html>
-<html>
+<html lang="th">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Bit Control Panel</title>
+  <title>F.R.I.D.A.Y. // STARK OS HUD</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    * { box-sizing: border-box; }
-    body { font-family: sans-serif; text-align: center; margin: 0; padding: 20px; background: #1a1a2e; color: #fff; min-height: 100vh; }
-    h1 { font-size: 24px; margin-bottom: 20px; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; max-width: 400px; margin: 0 auto; }
-    .btn { padding: 20px 10px; font-size: 18px; border-radius: 12px; border: none; cursor: pointer; transition: 0.2s; font-weight: bold; }
-    .btn:active { transform: scale(0.95); }
-    .btn-food { background: #e94560; color: white; }
-    .btn-weather { background: #0f3460; color: white; }
-    .btn-mail { background: #ff9a3c; color: white; }
-    .btn-cal { background: #4caf50; color: white; }
-    .btn-news { background: #9c27b0; color: white; }
-    .btn-chat { background: #533483; color: white; grid-column: span 2; }
-    #status { margin-top: 20px; color: #4CAF50; font-size: 18px; display: none; }
-    .nav { margin-bottom: 20px; }
-    .nav a { color: #fff; text-decoration: none; padding: 8px 15px; border: 1px solid #fff; border-radius: 20px; font-size: 14px; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Orbitron', 'Sarabun', sans-serif;
+      text-align: center;
+      background: radial-gradient(circle at center, #0c1829 0%, #050b14 100%);
+      color: #00f0ff;
+      min-height: 100vh;
+      padding: 20px 15px;
+      overflow-x: hidden;
+    }
+    
+    .nav { margin-bottom: 25px; }
+    .nav a {
+      color: #00f0ff;
+      text-decoration: none;
+      padding: 8px 18px;
+      border: 1px solid rgba(0, 240, 255, 0.4);
+      border-radius: 20px;
+      font-size: 13px;
+      letter-spacing: 1px;
+      background: rgba(0, 240, 255, 0.05);
+      box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+      transition: 0.3s;
+    }
+    .nav a:hover { background: rgba(0, 240, 255, 0.2); box-shadow: 0 0 15px #00f0ff; }
+
+    .header-box { margin-bottom: 25px; }
+    h1 {
+      font-size: 24px;
+      letter-spacing: 3px;
+      text-shadow: 0 0 15px rgba(0, 240, 255, 0.8);
+      margin-bottom: 5px;
+      font-weight: 900;
+    }
+    .sub-title {
+      font-size: 11px;
+      color: rgba(0, 240, 255, 0.6);
+      letter-spacing: 2px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      max-width: 440px;
+      margin: 0 auto;
+    }
+
+    .btn {
+      padding: 18px 10px;
+      font-size: 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      background: rgba(10, 25, 47, 0.7);
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 600;
+      letter-spacing: 1px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5), inset 0 0 10px rgba(0, 240, 255, 0.05);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .btn:active {
+      transform: scale(0.96);
+      box-shadow: 0 0 20px #00f0ff;
+    }
+    .btn span { font-size: 22px; }
+
+    .btn-focus { border-color: #00f0ff; color: #00f0ff; box-shadow: 0 0 15px rgba(0, 240, 255, 0.2); }
+    .btn-relax { border-color: #00ffaa; color: #00ffaa; }
+    .btn-alert { border-color: #ffaa00; color: #ffaa00; }
+    .btn-standby { border-color: #ff3366; color: #ff3366; }
+    .btn-diag { grid-column: span 2; border-color: #00f0ff; background: rgba(0, 240, 255, 0.15); color: #00f0ff; }
+
+    #status {
+      margin-top: 25px;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #00f0ff;
+      background: rgba(0, 240, 255, 0.1);
+      color: #00f0ff;
+      font-size: 14px;
+      letter-spacing: 1px;
+      display: none;
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0% { opacity: 0.7; }
+      50% { opacity: 1; }
+      100% { opacity: 0.7; }
+    }
   </style>
 </head>
 <body>
   <div class="nav">
-    <a href="/">🎤 กลับไปหน้าคุยด้วยเสียง</a>
+    <a href="/">🎙️ HUD // VOICE INTERFACE</a>
   </div>
 
-  <h1>🎮 รีโมทสั่งงานน้อง Bit</h1>
+  <div class="header-box">
+    <h1>F.R.I.D.A.Y.</h1>
+    <div class="sub-title">STARK INDUSTRIES TACTICAL CONSOLE</div>
+  </div>
   
   <div class="grid">
-    <button class="btn btn-food" onclick="sendCommand('ป้อนอาหาร')">🍖 ให้อาหาร</button>
-    <button class="btn btn-weather" onclick="sendCommand('สภาพอากาศวันนี้เป็นไงบ้าง')">🌤️ สภาพอากาศ</button>
-    <button class="btn btn-mail" onclick="sendCommand('มีอีเมลใหม่ไหม')">📧 เช็กอีเมล</button>
-    <button class="btn btn-cal" onclick="sendCommand('วันนี้นัดหมายอะไรบ้าง')">📅 เช็กตารางงาน</button>
-    <button class="btn btn-news" onclick="sendCommand('สรุปข่าวเด่นวันนี้ให้ฟังหน่อย')">📰 ข่าวเด่น</button>
-    <button class="btn" style="background: #2196F3; color: white;" onclick="sendCommand('เปิดบลูทูธ')">🎵 โหมดลำโพง</button>
-    <button class="btn btn-chat" onclick="sendCommand('สรุปสเตตัสตัวเองให้ฟังหน่อย')">📊 เช็กสถานะน้อง Bit</button>
+    <button class="btn btn-focus" onclick="sendCommand('focus')">
+      <span>⚡</span> PROTOCOL: FOCUS
+    </button>
+    <button class="btn btn-relax" onclick="sendCommand('relax')">
+      <span>☕</span> PROTOCOL: RELAX
+    </button>
+    <button class="btn btn-alert" onclick="sendCommand('alert')">
+      <span>⚠️</span> PROTOCOL: ALERT
+    </button>
+    <button class="btn btn-standby" onclick="sendCommand('standby')">
+      <span>🌙</span> PROTOCOL: STANDBY
+    </button>
+
+    <button class="btn" onclick="sendCommand('สภาพอากาศ')">
+      <span>🌤️</span> WEATHER SCAN
+    </button>
+    <button class="btn" onclick="sendCommand('เวลา')">
+      <span>⏰</span> CHRONO SYNC
+    </button>
+    <button class="btn" onclick="sendCommand('เช็คเมล')">
+      <span>📧</span> INBOX SCAN
+    </button>
+    <button class="btn" onclick="sendCommand('spotify')">
+      <span>🎵</span> AUDIO STREAM
+    </button>
+
+    <button class="btn btn-diag" onclick="sendCommand('diagnostic')">
+      <span>📡</span> RUN FULL SYSTEM DIAGNOSTIC
+    </button>
   </div>
 
-  <div id="status">🚀 ส่งคำสั่งแล้ว! รอน้อง Bit ตอบกลับ...</div>
+  <div id="status">⚡ TRANSMITTING PROTOCOL TO CORE...</div>
 
   <script>
     function sendCommand(text) {
-      document.getElementById('status').style.display = 'block';
+      let st = document.getElementById('status');
+      st.style.display = 'block';
+      st.innerText = "⚡ TRANSMITTING PROTOCOL: [" + text.toUpperCase() + "] ...";
+      
       let form = new FormData();
       form.append('message', text);
       fetch('/ui_chat', {method:'POST', body: new URLSearchParams(form)})
@@ -53,9 +164,10 @@
                 let url = text.substring(5);
                 window.location.href = url;
             }
-            setTimeout(()=>{ document.getElementById('status').style.display = 'none'; }, 2500);
+            st.innerText = "✅ PROTOCOL ENGAGED // F.R.I.D.A.Y. ONLINE";
+            setTimeout(()=>{ st.style.display = 'none'; }, 2200);
         })
-        .catch(()=>{ document.getElementById('status').style.display = 'none'; });
+        .catch(()=>{ st.innerText = "❌ TRANSMISSION FAILED"; setTimeout(()=>{ st.style.display = 'none'; }, 2500); });
     }
   </script>
 </body>

@@ -3,42 +3,209 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Companion Center</title>
+    <title>F.R.I.D.A.Y. // STARK OS VOICE INTERFACE</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        body { background-color: #f4f7f6; color: #2c3e50; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; padding-top: 50px; margin: 0; min-height: 100vh; }
-        h1 { font-size: 32px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 5px; color: #2c3e50; }
-        p.subtitle { color: #7f8c8d; font-size: 14px; margin-bottom: 40px; letter-spacing: 1px; }
-        .nav-link { display: inline-block; margin-bottom: 30px; color: #3498db; text-decoration: none; padding: 8px 20px; border: 1px solid #3498db; border-radius: 20px; font-size: 14px; transition: all 0.3s; }
-        .nav-link:hover { background: #3498db; color: #fff; }
-        button { width: 180px; height: 180px; border-radius: 50%; background: #fff; border: 4px solid #3498db; color: #3498db; font-size: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 10px 20px rgba(52, 152, 219, 0.2); transition: all 0.3s ease-in-out; display: block; margin: 0 auto; }
-        button:hover { box-shadow: 0 15px 30px rgba(52, 152, 219, 0.4); transform: translateY(-5px); }
-        button:active { transform: scale(0.95); }
-        .listening { background: #3498db; color: #fff; box-shadow: 0 0 40px rgba(52, 152, 219, 0.6); animation: pulse 1.5s infinite; border: none; }
-        @keyframes pulse { 0% { transform: scale(1); box-shadow: 0 0 20px rgba(52,152,219,0.5); } 50% { transform: scale(1.05); box-shadow: 0 0 50px rgba(52,152,219,0.8); } 100% { transform: scale(1); box-shadow: 0 0 20px rgba(52,152,219,0.5); } }
-        #status { margin-top: 30px; font-size: 1.2em; min-height: 30px; color: #e67e22; font-weight: bold; }
-        #transcript { margin: 20px auto; max-width: 400px; min-height: 60px; font-size: 18px; color: #34495e; text-align: center; word-wrap: break-word; padding: 15px; border: 2px dashed #bdc3c7; border-radius: 10px; background: #fff; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-        form { margin-top: 20px; }
-        input[type="text"] { width: 70%; max-width: 300px; padding: 12px; font-size: 16px; border: 1px solid #bdc3c7; border-radius: 20px; background: #fff; color: #2c3e50; font-family: inherit; }
-        input[type="text"]:focus { outline: none; border-color: #3498db; box-shadow: 0 0 10px rgba(52, 152, 219, 0.3); }
-        input[type="submit"] { padding: 12px 20px; font-size: 16px; border: 1px solid #3498db; background: #3498db; color: #fff; cursor: pointer; border-radius: 20px; font-family: inherit; transition: 0.3s; }
-        input[type="submit"]:hover { background: #2980b9; }
-        #sending { display: none; font-size: 18px; color: #3498db; margin: 20px; animation: blink 1s infinite; }
-        @keyframes blink { 50% { opacity: 0.5; } }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: radial-gradient(circle at center, #0c1829 0%, #03070f 100%);
+            color: #00f0ff;
+            font-family: 'Orbitron', 'Sarabun', sans-serif;
+            text-align: center;
+            min-height: 100vh;
+            padding: 30px 15px;
+            overflow-x: hidden;
+        }
+
+        .nav-link {
+            display: inline-block;
+            margin-bottom: 25px;
+            color: #00f0ff;
+            text-decoration: none;
+            padding: 8px 20px;
+            border: 1px solid rgba(0, 240, 255, 0.4);
+            border-radius: 20px;
+            font-size: 13px;
+            letter-spacing: 2px;
+            background: rgba(0, 240, 255, 0.05);
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+            transition: all 0.3s;
+        }
+        .nav-link:hover { background: rgba(0, 240, 255, 0.2); box-shadow: 0 0 15px #00f0ff; }
+
+        h1 {
+            font-size: 28px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            text-shadow: 0 0 15px rgba(0, 240, 255, 0.8);
+            margin-bottom: 5px;
+            font-weight: 900;
+        }
+        p.subtitle {
+            color: rgba(0, 240, 255, 0.6);
+            font-size: 11px;
+            letter-spacing: 2px;
+            margin-bottom: 30px;
+        }
+
+        /* ARC REACTOR BUTTON */
+        .reactor-container {
+            position: relative;
+            width: 220px;
+            height: 220px;
+            margin: 0 auto 30px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .reactor-ring {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px dashed rgba(0, 240, 255, 0.4);
+            animation: rotateRing 20s linear infinite;
+        }
+        @keyframes rotateRing { 100% { transform: rotate(360deg); } }
+
+        .reactor-btn {
+            width: 170px;
+            height: 170px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 240, 255, 0.2) 0%, rgba(5, 15, 30, 0.9) 70%);
+            border: 2px solid #00f0ff;
+            color: #00f0ff;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            cursor: pointer;
+            box-shadow: 0 0 30px rgba(0, 240, 255, 0.3), inset 0 0 20px rgba(0, 240, 255, 0.2);
+            transition: all 0.3s ease-in-out;
+            outline: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            z-index: 10;
+        }
+        .reactor-btn span { font-size: 28px; }
+        .reactor-btn:hover {
+            box-shadow: 0 0 50px rgba(0, 240, 255, 0.6), inset 0 0 30px rgba(0, 240, 255, 0.4);
+            transform: scale(1.02);
+        }
+        .reactor-btn:active { transform: scale(0.96); }
+
+        .listening {
+            border-color: #ff3366;
+            color: #ff3366;
+            box-shadow: 0 0 50px rgba(255, 51, 102, 0.8), inset 0 0 30px rgba(255, 51, 102, 0.5);
+            animation: pulseGlow 1.2s infinite;
+        }
+        @keyframes pulseGlow {
+            0% { transform: scale(1); box-shadow: 0 0 30px rgba(255, 51, 102, 0.5); }
+            50% { transform: scale(1.06); box-shadow: 0 0 60px rgba(255, 51, 102, 0.9); }
+            100% { transform: scale(1); box-shadow: 0 0 30px rgba(255, 51, 102, 0.5); }
+        }
+
+        #status {
+            font-size: 13px;
+            letter-spacing: 2px;
+            min-height: 25px;
+            color: rgba(0, 240, 255, 0.9);
+            margin-bottom: 20px;
+            text-shadow: 0 0 8px rgba(0, 240, 255, 0.5);
+        }
+
+        #transcript {
+            margin: 0 auto 25px auto;
+            max-width: 420px;
+            min-height: 55px;
+            font-size: 16px;
+            color: #fff;
+            padding: 15px;
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            border-radius: 12px;
+            background: rgba(10, 25, 47, 0.6);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+        }
+
+        form {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            max-width: 420px;
+            margin: 0 auto;
+        }
+        input[type="text"] {
+            flex: 1;
+            padding: 14px 18px;
+            font-size: 14px;
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            border-radius: 25px;
+            background: rgba(10, 25, 47, 0.8);
+            color: #00f0ff;
+            font-family: inherit;
+            outline: none;
+            letter-spacing: 1px;
+        }
+        input[type="text"]:focus {
+            border-color: #00f0ff;
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+        }
+        input[type="submit"] {
+            padding: 14px 22px;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            border: 1px solid #00f0ff;
+            background: rgba(0, 240, 255, 0.2);
+            color: #00f0ff;
+            cursor: pointer;
+            border-radius: 25px;
+            font-family: inherit;
+            transition: 0.3s;
+        }
+        input[type="submit"]:hover {
+            background: #00f0ff;
+            color: #050b14;
+            box-shadow: 0 0 20px #00f0ff;
+        }
+
+        #sending {
+            display: none;
+            font-size: 14px;
+            color: #00f0ff;
+            margin: 20px;
+            letter-spacing: 2px;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink { 50% { opacity: 0.4; } }
     </style>
 </head>
 <body>
-    <a href="/control" class="nav-link">📱 แผงควบคุม (Control Panel)</a>
-    <h1>Smart AI Pet</h1>
-    <p class="subtitle">ระบบผู้ช่วยอัจฉริยะ (Online)</p>
+    <a href="/control" class="nav-link">⚡ PROTOCOL CONTROL CONSOLE</a>
+    <h1>F.R.I.D.A.Y.</h1>
+    <p class="subtitle">STARK INDUSTRIES // VOICE INTELLIGENCE CORE</p>
     
-    <button id="micBtn" onclick="toggleMic()">🎤<br><br>กดเพื่อพูด</button>
-    <div id="status">SYSTEM READY. AWAITING COMMAND...</div>
-    <div id="transcript"></div>
-    <div id="sending">UPLOADING DIRECTIVE...</div>
+    <div class="reactor-container">
+        <div class="reactor-ring"></div>
+        <button id="micBtn" class="reactor-btn" onclick="toggleMic()">
+            <span>🎙️</span>
+            ENGAGE VOICE
+        </button>
+    </div>
+
+    <div id="status">CORE ACTIVE. AWAITING DIRECTIVE...</div>
+    <div id="transcript">Ready to listen, Sir.</div>
+    <div id="sending">TRANSMITTING DIRECTIVE TO F.R.I.D.A.Y. CORE...</div>
     
     <form action="/ui_chat" method="POST" id="chatForm" onsubmit="event.preventDefault(); sendMsg(document.getElementById('msgInput').value);">
-        <input type="text" name="message" id="msgInput" placeholder="> Override input...">
-        <input type="submit" value="SEND">
+        <input type="text" name="message" id="msgInput" placeholder="> Enter manual directive...">
+        <input type="submit" value="EXECUTE">
     </form>
 
     <script>
@@ -48,7 +215,7 @@
         if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
             const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
             recognition = new SR();
-            recognition.lang = 'th-TH'; // เปลี่ยนเป็น en-US ได้
+            recognition.lang = 'th-TH';
             recognition.continuous = false;
             recognition.interimResults = true;
 
@@ -68,7 +235,7 @@
             recognition.onerror = function(e) { document.getElementById('status').innerText = 'ERROR: ' + e.error; stopMic(); };
             recognition.onend = function() { stopMic(); };
         } else {
-            document.getElementById('status').innerText = 'SYSTEM WARNING: SPEECH MODULE NOT SUPPORTED.';
+            document.getElementById('status').innerText = 'SPEECH MODULE NOT SUPPORTED IN BROWSER.';
             document.getElementById('micBtn').style.display = 'none';
         }
 
@@ -76,39 +243,37 @@
         function startMic() {
             isListening = true;
             document.getElementById('micBtn').classList.add('listening');
-            document.getElementById('micBtn').innerHTML = '[ RECORDING ]<br><br>SPEAK NOW';
-            document.getElementById('status').innerText = 'LISTENING...';
+            document.getElementById('micBtn').innerHTML = '<span>⚡</span>RECORDING...';
+            document.getElementById('status').innerText = 'LISTENING TO SIR...';
             document.getElementById('transcript').innerText = '';
         }
         function stopMic() {
             isListening = false;
             document.getElementById('micBtn').classList.remove('listening');
-            document.getElementById('micBtn').innerHTML = '[ INITIATE ]<br><br>TAP TO SPEAK';
-            document.getElementById('status').innerText = 'PROCESSING...';
+            document.getElementById('micBtn').innerHTML = '<span>🎙️</span>ENGAGE VOICE';
+            document.getElementById('status').innerText = 'PROCESSING DIRECTIVE...';
         }
         function sendMsg(text) {
+            if (!text.trim()) return;
             document.getElementById('sending').style.display = 'block';
-            document.getElementById('chatForm').style.display = 'none';
-            document.getElementById('micBtn').style.display = 'none';
-            document.getElementById('status').innerText = 'DIRECTIVE SENT. AWAITING AI RESPONSE...';
+            document.getElementById('status').innerText = 'ANALYZING & TRANSMITTING...';
             let form = new FormData();
             form.append('message', text);
             fetch('/ui_chat', {method:'POST', body: new URLSearchParams(form)})
                 .then(res => res.text())
                 .then(text => {
+                    document.getElementById('sending').style.display = 'none';
                     if (text.startsWith("OPEN:")) {
                         let url = text.substring(5);
                         window.location.href = url;
                     }
-                    setTimeout(() => {
-                        document.getElementById('sending').style.display = 'none';
-                        document.getElementById('chatForm').style.display = 'block';
-                        document.getElementById('micBtn').style.display = 'block';
-                        document.getElementById('msgInput').value = '';
-                        document.getElementById('status').innerText = 'SYSTEM READY. AWAITING COMMAND...';
-                    }, 1000);
+                    document.getElementById('status').innerText = 'DIRECTIVE PROCESSED BY F.R.I.D.A.Y.';
+                    setTimeout(()=>{ document.getElementById('status').innerText = 'CORE ACTIVE. AWAITING DIRECTIVE...'; }, 3000);
                 })
-                .catch(()=>{ location.reload(); });
+                .catch(()=>{
+                    document.getElementById('sending').style.display = 'none';
+                    document.getElementById('status').innerText = 'COMMUNICATION ERROR';
+                });
         }
     </script>
 </body>
